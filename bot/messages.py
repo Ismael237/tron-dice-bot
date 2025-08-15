@@ -3,6 +3,12 @@ from config import TELEGRAM_ADMIN_USERNAME
 from utils.helpers import escape_markdown_v2, get_separator
 from bot.utils import format_trx, format_date, format_trx_escaped
 
+# Types for hints (light typing)
+try:
+    from database.models import ReferralCommission
+except Exception:  # pragma: no cover
+    ReferralCommission = object  # fallback for typing in isolated context
+
 # Message builders (return MarkdownV2 strings)
 
 def msg_already_registered() -> str:
@@ -242,6 +248,7 @@ def msg_welcome_registration(
 def msg_not_registered_prompt_start() -> str:
     return "\u2757 *You are not registered\\.* Use /start to register\\."
 
+
 def msg_user_not_found() -> str:
     return "User not found\\."
 
@@ -456,6 +463,49 @@ def msg_referral_info_single_level(rate_percent: str) -> str:
         f"• Direct referrals\\: `{escape_markdown_v2(rate_percent)}%`\n\n"
         "💡 Share your code and link to start earning\\!"
     )
+
+
+def msg_referral_history_page(rows: list[ReferralCommission], page: int, total_pages: int) -> str:
+    """Render a page of referral commissions history."""
+    sep = get_separator()
+    lines = [
+        f"👥 *Referral Commissions* (Page {page}/{total_pages})\n",
+        f"{sep}\n",
+    ]
+    if not rows:
+        lines.append("_No commissions yet\._\n")
+        return "".join(lines)
+    for c in rows:
+        status = getattr(getattr(c, 'status', None), 'value', str(getattr(c, 'status', '')))
+        lines.extend([
+            f"• 👤 From user\: `{escape_markdown_v2(str(getattr(c, 'referred_user_id', '-')))}" + "`\n",
+            f"  💵 Amount\: {format_trx_escaped(getattr(c, 'amount_trx', Decimal(0)))}\n",
+            f"  📅 Date\: `{escape_markdown_v2(format_date(getattr(c, 'created_at', None)))}`\n",
+            f"  🏷️ Status\: _{escape_markdown_v2(status)}_\n",
+            f"{sep}\n",
+        ])
+    return "".join(lines)
+
+
+def msg_referral_leaderboard_page(rows: list[dict], page: int, total_pages: int) -> str:
+    """Render a leaderboard page for referral earnings."""
+    sep = get_separator()
+    lines = [
+        f"🏆 *Referral Leaderboard* (Page {page}/{total_pages})\n",
+        f"{sep}\n",
+    ]
+    if not rows:
+        lines.append("_No entries yet\._\n")
+        return "".join(lines)
+    rank = (page - 1) * 5 + 1
+    for r in rows:
+        username = r.get('username') or f"User {r.get('user_id')}"
+        total = r.get('total', 0.0)
+        lines.append(
+            f"{rank}. `{escape_markdown_v2(str(username))}` — {format_trx_escaped(Decimal(str(total)))}\n"
+        )
+        rank += 1
+    return "".join(lines)
 
 # ============================ GAME MESSAGES ============================
 

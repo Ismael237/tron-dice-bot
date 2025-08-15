@@ -13,7 +13,7 @@ from bot.keyboards import (
 )
 
 from bot.handlers import withdrawal_handler
-from bot.handlers import start_handler, settings_handler, deposit_handler, referral_handler
+from bot.handlers import start_handler, settings_handler, deposit_handler, referral_handlers as referral_handler
 from bot.handlers import game_handlers
 from utils.logger import logger
 

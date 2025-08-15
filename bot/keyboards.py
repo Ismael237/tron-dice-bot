@@ -184,6 +184,7 @@ def referral_info_inline_keyboard():
 
 # ==================== GAME INLINE KEYBOARDS ====================
 
+
 def game_bet_amounts_inline_keyboard():
     """Inline keyboard for selecting a bet amount quickly."""
     keyboard = [
@@ -224,5 +225,18 @@ def game_post_result_inline_keyboard(game_id: int):
     keyboard = [
         [InlineKeyboardButton("🔄 Replay", callback_data="play_replay")],
         [InlineKeyboardButton("🏠 Menu", callback_data="play_menu")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+# ==================== REFERRAL INLINE KEYBOARDS ====================
+
+def referral_overview_inline_keyboard(share_link: str):
+    """Inline keyboard for referral overview with share link, history and leaderboard."""
+    keyboard = [
+        [InlineKeyboardButton("🔗 Share Link", url=share_link)],
+        [InlineKeyboardButton("📜 History", callback_data="ref_hist_page_1")],
+        [InlineKeyboardButton("🏆 Leaderboard", callback_data="ref_lb_page_1")],
+        [InlineKeyboardButton("❓ Info", callback_data="referral_info")],
     ]
     return InlineKeyboardMarkup(keyboard)

@@ -20,7 +20,7 @@ from bot.handlers.start_handler import (
 )
 from bot.handlers.deposit_handler import handle_deposit
 from bot.handlers.withdrawal_handler import handle_withdraw
-from bot.handlers.referral_handler import handle_referral, handle_referral_info
+from bot.handlers.referral_handlers import handle_referral, handle_referral_info, handle_referral_callback
 from bot.handlers.message_router import route_text_message, handle_error
 from bot.handlers.settings_handler import handle_settings, back_to_main_menu, handle_help, handle_about, handle_support, handle_qa
 from bot.handlers import game_handlers
@@ -67,6 +67,7 @@ async def setup_bot():
     # Register callback query handlers
     app.add_handler(CallbackQueryHandler(handle_history_pagination, pattern=r"^history_(?:all|deposits|withdrawals)_page_\d+$"))
     app.add_handler(CallbackQueryHandler(handle_referral_info, pattern=r"^referral_info$"))
+    app.add_handler(CallbackQueryHandler(handle_referral_callback, pattern=r"^(?:ref_hist_page_|ref_lb_page_)\d+$"))
     app.add_handler(CallbackQueryHandler(game_handlers.handle_play_callback, pattern=r"^play_"))
     
     # Error handler
