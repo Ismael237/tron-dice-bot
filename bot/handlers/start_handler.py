@@ -23,6 +23,7 @@ from bot.messages import (
     msg_user_not_found,
 )
 from services.user_service import UserService
+from services.admin_service import AdminService
 from config import ITEMS_PER_PAGE, TELEGRAM_ADMIN_USERNAME
 from utils.helpers import escape_markdown_v2
 
@@ -38,9 +39,10 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # if already registered, show main menu
     user = UserService.get_user_by_telegram(telegram_id)
     if user:
+        is_admin = AdminService.is_admin(str(update.effective_user.id), update.effective_user.username)
         await update.message.reply_markdown_v2(
             msg_already_registered(),
-            reply_markup=main_reply_keyboard(),
+            reply_markup=main_reply_keyboard(is_admin=is_admin),
         )
         return
 
@@ -91,7 +93,7 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             support_username='@' + TELEGRAM_ADMIN_USERNAME,
             sponsor_line=sponsor_line,
         ),
-        reply_markup=main_reply_keyboard(),
+        reply_markup=main_reply_keyboard(is_admin=AdminService.is_admin(str(update.effective_user.id), update.effective_user.username)),
     )
 
 
@@ -101,7 +103,7 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user:
         await update.message.reply_markdown_v2(
             msg_not_registered_prompt_start(),
-            reply_markup=main_reply_keyboard(),
+            reply_markup=main_reply_keyboard(is_admin=AdminService.is_admin(str(update.effective_user.id), update.effective_user.username)),
         )
         return
 
@@ -111,7 +113,7 @@ async def handle_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
             total_deposited_trx=user.total_deposited,
             total_withdrawn_trx=user.total_withdrawn,
         ),
-        reply_markup=main_reply_keyboard(),
+        reply_markup=main_reply_keyboard(is_admin=AdminService.is_admin(str(update.effective_user.id), update.effective_user.username)),
     )
 
 
@@ -121,7 +123,7 @@ async def handle_history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not user:
         await update.message.reply_markdown_v2(
             msg_not_registered_prompt_start(),
-            reply_markup=main_reply_keyboard(),
+            reply_markup=main_reply_keyboard(is_admin=AdminService.is_admin(str(update.effective_user.id), update.effective_user.username)),
         )
         return
 

@@ -220,7 +220,7 @@ def msg_welcome_registration(
         f"✅ Registration successful \\!\n\n"
         "🏦 *YOUR WALLET*\n"
         f"{sep}\n\n"
-        f"💰 *TRON Deposit Address \\:*\n"
+        "💰 *TRON Deposit Address \\:*\n"
         f"`{escaped_address}`\n\n"
         "👥 *REFERRAL LINK*\n"
         f"{sep}\n\n"
@@ -671,3 +671,100 @@ def msg_game_leaderboard_page(rows: list[dict], page: int, total_pages: int, per
             f"\n📍 Your position: `#{escape_markdown_v2(str(user_pos))}` — {val_str}\n",
         ])
     return "".join(lines)
+
+# ============================ ADMIN MESSAGES ============================
+
+def msg_admin_unauthorized() -> str:
+    return "🚫 Unauthorized\."
+
+
+def msg_admin_main() -> str:
+    sep = get_separator()
+    return (
+        "🛠️ *ADMIN PANEL*\n"
+        f"{sep}\n\n"
+        "Use the inline buttons below to navigate\."
+    )
+
+
+def msg_admin_stats(overall: dict, emergency_stop: bool) -> str:
+    """overall keys: users_total, users_active, games_today, vol_today, rev_today, hot_wallet_trx"""
+    sep = get_separator()
+    def _fmt_num(v):
+        try:
+            return escape_markdown_v2(f"{int(v):,}")
+        except Exception:
+            return escape_markdown_v2(str(v))
+    vol = format_trx_escaped(overall.get("vol_today", 0))
+    rev = format_trx_escaped(overall.get("rev_today", 0))
+    hot = format_trx_escaped(overall.get("hot_wallet_trx", 0))
+    status = "🛑 Games: DISABLED" if emergency_stop else "▶️ Games: ENABLED"
+    return (
+        "📊 *Admin Stats*\n"
+        f"{sep}\n\n"
+        f"👥 Users Total: `{_fmt_num(overall.get('users_total', 0))}`\n"
+        f"✅ Active Users: `{_fmt_num(overall.get('users_active', 0))}`\n"
+        f"🎲 Games Today: `{_fmt_num(overall.get('games_today', 0))}`\n"
+        f"📊 Volume Today: {vol}\n"
+        f"🏦 Revenue Today: {rev}\n"
+        f"💼 Hot Wallet: {hot}\n\n"
+        f"{escape_markdown_v2(status)}"
+    )
+
+
+def msg_admin_users_page(rows: list[dict], page: int, total_pages: int) -> str:
+    sep = get_separator()
+    lines = [
+        f"👤 *Users* (Page {page}/{total_pages})\n",
+        f"{sep}\n",
+    ]
+    if not rows:
+        lines.append("_No users found\._\n")
+        return "".join(lines)
+    for u in rows:
+        uname = u.get('username') or f"User {u.get('id')}"
+        lines.extend([
+            f"• `{escape_markdown_v2(str(uname))}` — ID:`{escape_markdown_v2(str(u.get('id')))}" + "`\n",
+            f"  💵 Balance: {format_trx_escaped(u.get('account_balance', 0))}  |  🎲 Played: `{escape_markdown_v2(str(u.get('total_games_played', 0)))}`\n",
+        ])
+    return "".join(lines)
+
+
+def msg_admin_games_page(rows: list[dict], page: int, total_pages: int) -> str:
+    sep = get_separator()
+    lines = [
+        f"🎲 *Games* (Page {page}/{total_pages})\n",
+        f"{sep}\n",
+    ]
+    if not rows:
+        lines.append("_No games found\._\n")
+        return "".join(lines)
+    for g in rows:
+        is_win = bool(g.get('is_winner'))
+        outcome = "✅ WIN" if is_win else "❌ LOSS"
+        lines.extend([
+            f"• ID:`{escape_markdown_v2(str(g.get('id')))}" + "`  👤 `{escape_markdown_v2(str(g.get('username') or g.get('user_id')))}" + "`  🎯 `{escape_markdown_v2(str(g.get('target_number', '-')))}" + "`  🎲 `{escape_markdown_v2(str(g.get('result_number', '-')))}" + "`\n",
+            f"  💰 Bet: {format_trx_escaped(g.get('bet_amount', 0))}  🏆 Win: {format_trx_escaped(g.get('win_amount', 0))}  — {escape_markdown_v2(outcome)}\n",
+        ])
+    return "".join(lines)
+
+
+def msg_admin_alerts_page(rows: list[dict], page: int, total_pages: int) -> str:
+    sep = get_separator()
+    lines = [
+        f"🚨 *Alerts* (Page {page}/{total_pages})\n",
+        f"{sep}\n",
+    ]
+    if not rows:
+        lines.append("_No alerts\._\n")
+        return "".join(lines)
+    for a in rows:
+        lines.extend([
+            f"• `{escape_markdown_v2(a.get('title', 'Alert'))}`\n",
+            f"  {escape_markdown_v2(a.get('message', ''))}\n",
+        ])
+    return "".join(lines)
+
+
+def msg_admin_controls_hint() -> str:
+    return "Use the button below to toggle emergency stop\."

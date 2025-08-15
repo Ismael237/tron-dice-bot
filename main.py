@@ -9,7 +9,8 @@ from config import (
     TELEGRAM_BOT_TOKEN, DATABASE_URL,
     DEPOSIT_CHECK_INTERVAL, WITHDRAWAL_PROCESS_INTERVAL,
     CHALLENGE_UPDATE_INTERVAL, LEADERBOARD_UPDATE_INTERVAL,
-    AP_SCHEDULER_THREAD_POOL_SIZE
+    AP_SCHEDULER_THREAD_POOL_SIZE,
+    ADMIN_MONITOR_INTERVAL,
 )
 from database.database import init_database
 from utils.logger import logger
@@ -27,10 +28,19 @@ from bot.handlers.settings_handler import handle_settings, back_to_main_menu, ha
 from bot.handlers import game_handlers
 from bot.handlers.challenge_handlers import handle_challenges, handle_challenges_callback
 from bot.handlers.leaderboard_handlers import handle_leaderboard, handle_leaderboard_callback
+from bot.handlers.admin_handlers import (
+    handle_admin_main,
+    handle_admin_stats,
+    handle_admin_users,
+    handle_admin_games,
+    handle_admin_alerts,
+    handle_admin_toggle_callback,
+)
 from workers.deposit_monitor import run_deposit_monitor
 from workers.withdrawal_processor import run_withdrawal_processor
 from workers.challenge_worker import run_challenge_worker
 from workers.leaderboard_worker import run_leaderboard_worker
+from workers.admin_monitor import run_admin_monitor
 
 def start_scheduler():
     jobstores = {'default': SQLAlchemyJobStore(url=DATABASE_URL)}
@@ -45,6 +55,8 @@ def start_scheduler():
     scheduler.add_job(run_challenge_worker, 'cron', hour=0, minute=0, id='challenge_daily_reset', replace_existing=True)
     # Leaderboard: periodic aggregation and notifications
     scheduler.add_job(run_leaderboard_worker, 'interval', minutes=LEADERBOARD_UPDATE_INTERVAL, id='leaderboard_updates', replace_existing=True)
+    # Admin monitor
+    scheduler.add_job(run_admin_monitor, 'interval', minutes=ADMIN_MONITOR_INTERVAL, id='admin_monitor', replace_existing=True)
     
     scheduler.start()
     logger.info("[Scheduler] APScheduler started with persistent jobs.")
@@ -72,6 +84,12 @@ async def setup_bot():
     app.add_handler(CommandHandler("qa", handle_qa))
     app.add_handler(CommandHandler("main", back_to_main_menu))
     app.add_handler(CommandHandler("play", game_handlers.handle_play))
+    # Admin commands
+    app.add_handler(CommandHandler("admin", handle_admin_main))
+    app.add_handler(CommandHandler("admin_stats", handle_admin_stats))
+    app.add_handler(CommandHandler("admin_users", handle_admin_users))
+    app.add_handler(CommandHandler("admin_games", handle_admin_games))
+    app.add_handler(CommandHandler("admin_alerts", handle_admin_alerts))
     
     # Register free-text message router
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, route_text_message))
@@ -83,6 +101,12 @@ async def setup_bot():
     app.add_handler(CallbackQueryHandler(game_handlers.handle_play_callback, pattern=r"^play_"))
     app.add_handler(CallbackQueryHandler(handle_challenges_callback, pattern=r"^(?:chal_page_\d+|chal_claim_\d+)$"))
     app.add_handler(CallbackQueryHandler(handle_leaderboard_callback, pattern=r"^(?:lb_period_.*|lb_metric_.*|lb_.*_page_\d+)$"))
+    # Admin callbacks
+    app.add_handler(CallbackQueryHandler(handle_admin_stats, pattern=r"^admin_stats_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_users, pattern=r"^admin_users_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_games, pattern=r"^admin_games_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_alerts, pattern=r"^admin_alerts_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_toggle_callback, pattern=r"^admin_toggle_emergency$"))
     
     # Error handler
     app.add_error_handler(handle_error)

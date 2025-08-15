@@ -11,6 +11,7 @@ WITHDRAW_BTN = "🏧 Withdraw"
 SHARE_EARN_BTN = "👥 Share & Earn"
 HISTORY_BTN = "📜 History"
 SETTINGS_BTN = "⚙️ Settings"
+ADMIN_BTN = "🛠 Admin"
 
 # Navigation Buttons
 MAIN_MENU_BTN = "🏠 Main Menu"
@@ -44,7 +45,7 @@ REFERRAL_INFO_BTN = "👥 Referral Info"
 
 # ==================== REPLY KEYBOARDS ====================
 
-def main_reply_keyboard():
+def main_reply_keyboard(is_admin: bool = False):
     """Main menu keyboard with primary bot functions"""
     keyboard = [
         [PLAY_BTN, BALANCE_BTN],
@@ -52,6 +53,8 @@ def main_reply_keyboard():
         [SHARE_EARN_BTN, HISTORY_BTN],
         [SETTINGS_BTN]
     ]
+    if is_admin:
+        keyboard.append([ADMIN_BTN])
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,
@@ -235,7 +238,6 @@ def leaderboard_nav_inline_keyboard(period: str, metric: str, current_page: int,
 
 # ==================== GAME INLINE KEYBOARDS ====================
 
-
 def game_bet_amounts_inline_keyboard():
     """Inline keyboard for selecting a bet amount quickly."""
     keyboard = [
@@ -289,5 +291,41 @@ def referral_overview_inline_keyboard(share_link: str):
         [InlineKeyboardButton("📜 History", callback_data="ref_hist_page_1")],
         [InlineKeyboardButton("🏆 Leaderboard", callback_data="ref_lb_page_1")],
         [InlineKeyboardButton("❓ Info", callback_data="referral_info")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+# ==================== ADMIN INLINE KEYBOARDS ====================
+
+def admin_main_inline_keyboard():
+    """Admin main navigation inline keyboard."""
+    keyboard = [
+        [InlineKeyboardButton("📊 Stats", callback_data="admin_stats_page_1")],
+        [InlineKeyboardButton("👤 Users", callback_data="admin_users_page_1")],
+        [InlineKeyboardButton("🎲 Games", callback_data="admin_games_page_1")],
+        [InlineKeyboardButton("🚨 Alerts", callback_data="admin_alerts_page_1")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def admin_pagination_inline_keyboard(current_page: int, total_pages: int, section: str):
+    """Generic admin pagination keyboard with section prefix.
+
+    section: one of 'stats', 'users', 'games', 'alerts'
+    """
+    nav = []
+    if current_page > 1:
+        nav.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"admin_{section}_page_{current_page-1}"))
+    nav.append(InlineKeyboardButton(f"📄 {current_page}/{total_pages}", callback_data="admin_curr"))
+    if current_page < total_pages:
+        nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"admin_{section}_page_{current_page+1}"))
+    return InlineKeyboardMarkup([nav])
+
+
+def admin_controls_inline_keyboard(emergency_stop: bool):
+    """Controls for admin settings like emergency stop (toggle)."""
+    toggle_text = "🛑 Disable Games" if not emergency_stop else "▶️ Enable Games"
+    keyboard = [
+        [InlineKeyboardButton(toggle_text, callback_data="admin_toggle_emergency")],
     ]
     return InlineKeyboardMarkup(keyboard)
