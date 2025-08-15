@@ -4,6 +4,7 @@ from config import TRON_EXPLORER_URL
 
 # ==================== CONSTANTS ====================
 # Main Menu Buttons
+PLAY_BTN = "🎲 Play"
 DEPOSIT_BTN = "💰 Deposit"
 BALANCE_BTN = "💳 Balance"
 WITHDRAW_BTN = "🏧 Withdraw"
@@ -46,7 +47,7 @@ REFERRAL_INFO_BTN = "👥 Referral Info"
 def main_reply_keyboard():
     """Main menu keyboard with primary bot functions"""
     keyboard = [
-        [BALANCE_BTN],
+        [PLAY_BTN, BALANCE_BTN],
         [DEPOSIT_BTN, WITHDRAW_BTN],
         [SHARE_EARN_BTN, HISTORY_BTN],
         [SETTINGS_BTN]
@@ -56,6 +57,7 @@ def main_reply_keyboard():
         resize_keyboard=True,
         one_time_keyboard=False
     )
+
 
 def withdraw_reply_keyboard():
     """Withdraw submenu with predefined amounts"""
@@ -71,6 +73,7 @@ def withdraw_reply_keyboard():
         one_time_keyboard=False
     )
 
+
 def cancel_withdraw_keyboard():
     """Cancel withdrawal keyboard"""
     keyboard = [
@@ -81,6 +84,7 @@ def cancel_withdraw_keyboard():
         resize_keyboard=True,
         one_time_keyboard=False
     )
+
 
 def history_reply_keyboard():
     """History submenu keyboard"""
@@ -94,6 +98,7 @@ def history_reply_keyboard():
         resize_keyboard=True,
         one_time_keyboard=False
     )
+
 
 def settings_reply_keyboard():
     """Settings submenu keyboard"""
@@ -109,6 +114,7 @@ def settings_reply_keyboard():
         one_time_keyboard=False
     )
 
+
 def withdrawal_confirm_reply_keyboard():
     """Reply keyboard for confirming or cancelling a withdrawal"""
     keyboard = [
@@ -121,6 +127,7 @@ def withdrawal_confirm_reply_keyboard():
         one_time_keyboard=False
     )
 
+
 def withdrawal_confirm_inline_keyboard(amount):
     """Confirmation keyboard for withdrawal"""
     keyboard = [
@@ -128,6 +135,7 @@ def withdrawal_confirm_inline_keyboard(amount):
         [InlineKeyboardButton("❌ Cancel Withdrawal", callback_data="cancel_withdraw")]
     ]
     return InlineKeyboardMarkup(keyboard)
+
 
 def transaction_details_inline_keyboard(tx_hash=None):
     """Inline keyboard for transaction details"""
@@ -137,6 +145,7 @@ def transaction_details_inline_keyboard(tx_hash=None):
         keyboard.append([InlineKeyboardButton("🔍 View on Blockchain", url=f"{TRON_EXPLORER_URL}/#/transaction/{tx_hash}")])
     
     return InlineKeyboardMarkup(keyboard)
+
 
 def pagination_inline_keyboard(current_page, total_pages, callback_prefix):
     """Generic pagination keyboard"""
@@ -156,8 +165,10 @@ def pagination_inline_keyboard(current_page, total_pages, callback_prefix):
     
     return InlineKeyboardMarkup(keyboard)
 
+
 def withdraw_button():
     return InlineKeyboardButton("💸 Withdraw", callback_data="withdraw")
+
 
 def referral_info_inline_keyboard():
     """Creates an inline keyboard with a button to show referral system info"""
@@ -168,5 +179,50 @@ def referral_info_inline_keyboard():
                 callback_data="referral_info"
             )
         ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+# ==================== GAME INLINE KEYBOARDS ====================
+
+def game_bet_amounts_inline_keyboard():
+    """Inline keyboard for selecting a bet amount quickly."""
+    keyboard = [
+        [
+            InlineKeyboardButton("1 TRX", callback_data="play_amt_1"),
+            InlineKeyboardButton("5 TRX", callback_data="play_amt_5"),
+            InlineKeyboardButton("10 TRX", callback_data="play_amt_10"),
+        ],
+        [
+            InlineKeyboardButton("50 TRX", callback_data="play_amt_50"),
+            InlineKeyboardButton("100 TRX", callback_data="play_amt_100"),
+            InlineKeyboardButton("MAX", callback_data="play_amt_max"),
+        ],
+        [InlineKeyboardButton("❌ Cancel", callback_data="play_cancel")],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def game_confirm_inline_keyboard(target: int | None = None):
+    """Inline keyboard for confirming bet and adjusting target with +/-."""
+    row_ctrl = []
+    if target is not None:
+        row_ctrl = [
+            InlineKeyboardButton("➖", callback_data="play_dec"),
+            InlineKeyboardButton(f"🎯 {target}", callback_data="noop"),
+            InlineKeyboardButton("➕", callback_data="play_inc"),
+        ]
+    keyboard = []
+    if row_ctrl:
+        keyboard.append(row_ctrl)
+    keyboard.append([InlineKeyboardButton("✅ Confirm", callback_data="play_confirm")])
+    keyboard.append([InlineKeyboardButton("❌ Cancel", callback_data="play_cancel")])
+    return InlineKeyboardMarkup(keyboard)
+
+
+def game_post_result_inline_keyboard(game_id: int):
+    """Inline keyboard after a game result: replay or go back to menu."""
+    keyboard = [
+        [InlineKeyboardButton("🔄 Replay", callback_data="play_replay")],
+        [InlineKeyboardButton("🏠 Menu", callback_data="play_menu")],
     ]
     return InlineKeyboardMarkup(keyboard)
