@@ -182,6 +182,57 @@ def referral_info_inline_keyboard():
     ]
     return InlineKeyboardMarkup(keyboard)
 
+
+def challenges_list_inline_keyboard(items: list[dict], current_page: int, total_pages: int):
+    """Inline keyboard for challenges page.
+    - Adds a Claim button per completed & unclaimed challenge.
+    - Adds pagination row (prefix: 'chal').
+    """
+    rows = []
+    # Per-item claim buttons (max few to avoid clutter)
+    for it in items:
+        if bool(it.get("is_completed")) and not bool(it.get("reward_claimed")):
+            cid = it.get("id")
+            if cid is not None:
+                rows.append([InlineKeyboardButton("✅ Claim", callback_data=f"chal_claim_{cid}")])
+    # Pagination row
+    nav = []
+    if current_page > 1:
+        nav.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"chal_page_{current_page-1}"))
+    nav.append(InlineKeyboardButton(f"📄 {current_page}/{total_pages}", callback_data="chal_page_curr"))
+    if current_page < total_pages:
+        nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"chal_page_{current_page+1}"))
+    if nav:
+        rows.append(nav)
+    return InlineKeyboardMarkup(rows)
+
+
+def leaderboard_nav_inline_keyboard(period: str, metric: str, current_page: int, total_pages: int):
+    """Inline keyboard for leaderboard with period & metric toggles and pagination.
+    Callback prefix: lb_{period}_{metric}_page_{n}
+    Period buttons: lb_period_daily/weekly/monthly (preserve metric & reset page=1)
+    Metric buttons: lb_metric_won/wagered (preserve period & reset page=1)
+    """
+    # Toggle rows
+    period_row = [
+        InlineKeyboardButton("📅 Daily" + (" ✅" if period == "daily" else ""), callback_data="lb_period_daily"),
+        InlineKeyboardButton("📆 Weekly" + (" ✅" if period == "weekly" else ""), callback_data="lb_period_weekly"),
+        InlineKeyboardButton("🗓️ Monthly" + (" ✅" if period == "monthly" else ""), callback_data="lb_period_monthly"),
+    ]
+    metric_row = [
+        InlineKeyboardButton("💰 Winnings" + (" ✅" if metric == "won" else ""), callback_data="lb_metric_won"),
+        InlineKeyboardButton("📊 Volume" + (" ✅" if metric == "wagered" else ""), callback_data="lb_metric_wagered"),
+    ]
+    # Pagination row
+    nav = []
+    if current_page > 1:
+        nav.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"lb_{period}_{metric}_page_{current_page-1}"))
+    nav.append(InlineKeyboardButton(f"📄 {current_page}/{total_pages}", callback_data="lb_curr"))
+    if current_page < total_pages:
+        nav.append(InlineKeyboardButton("➡️ Next", callback_data=f"lb_{period}_{metric}_page_{current_page+1}"))
+    return InlineKeyboardMarkup([period_row, metric_row, nav])
+
+
 # ==================== GAME INLINE KEYBOARDS ====================
 
 

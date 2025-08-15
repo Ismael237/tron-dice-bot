@@ -580,3 +580,94 @@ def msg_game_result(
 
 def msg_bet_in_progress() -> str:
     return r"⏳ *A bet is already in progress\\.* Please finish it before starting a new one\."
+
+
+# ============================ CHALLENGES MESSAGES ============================
+
+def msg_challenges_page(items: list[dict], page: int, total_pages: int) -> str:
+    """Render a page of active challenges with user progress.
+
+    Each item dict keys:
+      - id: int
+      - name: str
+      - description: str
+      - type: str (bet_count | wagered_amount | win_streak)
+      - target: Decimal | float | int
+      - progress: Decimal | float | int
+      - is_completed: bool
+      - reward_amount: Decimal
+      - reward_claimed: bool
+    """
+    sep = get_separator()
+    lines = [
+        f"🎁 *Daily Challenges* (Page {page}/{total_pages})\n",
+        f"{sep}\n",
+    ]
+    if not items:
+        lines.append("_No active challenges right now\._\n")
+        return "".join(lines)
+
+    def _fmt_bar(curr: float, target: float, width: int = 10) -> str:
+        try:
+            ratio = max(0.0, min(1.0, float(curr) / float(target) if float(target) > 0 else 0.0))
+        except Exception:
+            ratio = 0.0
+        filled = int(round(ratio * width))
+        return "█" * filled + "░" * (width - filled)
+
+    for it in items:
+        name = escape_markdown_v2(str(it.get("name", "Challenge")))
+        desc = escape_markdown_v2(str(it.get("description", "")))
+        t = escape_markdown_v2(str(it.get("type", "-")))
+        target = escape_markdown_v2(str(it.get("target", 0)))
+        prog_val = it.get("progress", 0)
+        is_completed = bool(it.get("is_completed", False))
+        reward_claimed = bool(it.get("reward_claimed", False))
+        reward = format_trx_escaped(it.get("reward_amount", 0))
+        bar = _fmt_bar(float(prog_val or 0), float(it.get("target", 0) or 0))
+        lines.extend([
+            f"• *{name}* — _{t}_\n",
+            f"  {desc}\n",
+            f"  📈 `{escape_markdown_v2(str(prog_val))}` / `{target}`  [{escape_markdown_v2(bar)}]\n",
+            f"  🎁 Reward: {reward}  —  {'✅ Completed' if is_completed else '⏳ In progress'}{' (claimed)' if reward_claimed else ''}\n",
+            f"{sep}\n",
+        ])
+    return "".join(lines)
+
+
+# ============================ GAME LEADERBOARD MESSAGES ============================
+
+def msg_game_leaderboard_page(rows: list[dict], page: int, total_pages: int, period: str, metric: str, user_pos: int | None = None, user_value: float | None = None) -> str:
+    """Render a leaderboard page for game results.
+
+    rows: list of { rank, user_id, username, total_won, total_wagered, games_count }
+    period: 'daily' | 'weekly' | 'monthly'
+    metric: 'won' | 'wagered'
+    """
+    sep = get_separator()
+    title_map = {"daily": "Daily", "weekly": "Weekly", "monthly": "Monthly"}
+    metric_map = {"won": "Top Winnings", "wagered": "Top Volume"}
+    lines = [
+        f"🏆 *{escape_markdown_v2(title_map.get(period, period).upper())} {escape_markdown_v2(metric_map.get(metric, metric))}* (Page {page}/{total_pages})\n",
+        f"{sep}\n",
+    ]
+    if not rows:
+        lines.append("_No entries yet\._\n")
+        return "".join(lines)
+
+    for r in rows:
+        rank = r.get("rank")
+        username = r.get("username") or f"User {r.get('user_id')}"
+        username = escape_markdown_v2(str(username))
+        if metric == "won":
+            val = format_trx_escaped(r.get("total_won", 0))
+        else:
+            val = format_trx_escaped(r.get("total_wagered", 0))
+        lines.append(f"{rank}. `{username}` — {val}\n")
+
+    if user_pos is not None:
+        val_str = format_trx_escaped(user_value or 0)
+        lines.extend([
+            f"\n📍 Your position: `#{escape_markdown_v2(str(user_pos))}` — {val_str}\n",
+        ])
+    return "".join(lines)
