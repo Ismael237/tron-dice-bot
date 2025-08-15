@@ -23,6 +23,7 @@ from bot.handlers.withdrawal_handler import handle_withdraw
 from bot.handlers.referral_handler import handle_referral, handle_referral_info
 from bot.handlers.message_router import route_text_message, handle_error
 from bot.handlers.settings_handler import handle_settings, back_to_main_menu, handle_help, handle_about, handle_support, handle_qa
+from bot.handlers import game_handlers
 from workers.deposit_monitor import run_deposit_monitor
 from workers.withdrawal_processor import run_withdrawal_processor
 
@@ -58,6 +59,7 @@ async def setup_bot():
     app.add_handler(CommandHandler("support", handle_support))
     app.add_handler(CommandHandler("qa", handle_qa))
     app.add_handler(CommandHandler("main", back_to_main_menu))
+    app.add_handler(CommandHandler("play", game_handlers.handle_play))
     
     # Register free-text message router
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, route_text_message))
@@ -65,6 +67,7 @@ async def setup_bot():
     # Register callback query handlers
     app.add_handler(CallbackQueryHandler(handle_history_pagination, pattern=r"^history_(?:all|deposits|withdrawals)_page_\d+$"))
     app.add_handler(CallbackQueryHandler(handle_referral_info, pattern=r"^referral_info$"))
+    app.add_handler(CallbackQueryHandler(game_handlers.handle_play_callback, pattern=r"^play_"))
     
     # Error handler
     app.add_error_handler(handle_error)

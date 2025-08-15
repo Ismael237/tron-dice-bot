@@ -197,7 +197,7 @@ def msg_welcome_registration(
     username: str,
     address: str,
     share_link: str,
-    support_username: str = None,
+    support_username: str | None = None,
     sponsor_line: str | None = None,
 ) -> str:
     sep = get_separator()
@@ -456,3 +456,77 @@ def msg_referral_info_single_level(rate_percent: str) -> str:
         f"• Direct referrals\\: `{escape_markdown_v2(rate_percent)}%`\n\n"
         "💡 Share your code and link to start earning\\!"
     )
+
+# ============================ GAME MESSAGES ============================
+
+def msg_play_intro(balance_trx: str, min_bet: str, max_bet: str) -> str:
+    sep = get_separator()
+    return (
+        "🎲 *DICE GAME*\n"
+        f"{sep}\n\n"
+        "Place your bet and pick a target number between 1 and 100\!\n\n"
+        f"💳 Balance\: {escape_markdown_v2(balance_trx)}\n"
+        f"🔻 Min bet\: {escape_markdown_v2(min_bet)}\n"
+        f"🔺 Max bet\: {escape_markdown_v2(max_bet)}\n\n"
+        "Select a preset amount below or type a custom amount\, then send your target number\."
+    )
+
+
+def msg_invalid_bet_amount_play() -> str:
+    return r"❌ *Invalid bet amount\\.* Please enter a numeric value within limits\."
+
+
+def msg_enter_target_number(amount_trx: str) -> str:
+    return (
+        "🎯 *Enter your target number*\n\n"
+        f"Bet\: {escape_markdown_v2(amount_trx)}\n"
+        "Range\: 1\-100\n"
+        "Tip\: Higher target = bigger multiplier but lower win chance\."
+    )
+
+
+def msg_invalid_target_number() -> str:
+    return r"❌ *Invalid target\\.* Please type an integer between 1 and 100\."
+
+
+def msg_confirm_bet(bet_amount: str, target_number: str, multiplier: str, potential_win: str) -> str:
+    sep = get_separator()
+    return (
+        "⚠️ *CONFIRM YOUR BET*\n"
+        f"{sep}\n\n"
+        f"💰 Bet\: {escape_markdown_v2(bet_amount)}\n"
+        f"🎯 Target\: {escape_markdown_v2(target_number)}\n"
+        f"📈 Multiplier\: {escape_markdown_v2(multiplier)}\n"
+        f"🏆 Potential win\: {escape_markdown_v2(potential_win)}\n\n"
+        "Use the buttons to adjust target or confirm/cancel\."
+    )
+
+
+def msg_game_result(
+    game_id: int,
+    is_winner: bool,
+    bet_amount: Decimal,
+    win_amount: Decimal,
+    target_number: int,
+    result_number: int,
+    multiplier: Decimal,
+    balance_after: Decimal,
+) -> str:
+    sep = get_separator()
+    outcome = "🎉 *YOU WON\!*" if is_winner else "😔 *You lost\.*"
+    return (
+        "🎲 *GAME RESULT*\n"
+        f"{sep}\n\n"
+        f"🎯 Target\: `{escape_markdown_v2(str(target_number))}`\n"
+        f"🎲 Result\: `{escape_markdown_v2(str(result_number))}`\n"
+        f"💰 Bet\: {format_trx_escaped(bet_amount)}\n"
+        f"🏆 Win\: {format_trx_escaped(win_amount)}\n"
+        f"📈 Multiplier\: `{escape_markdown_v2(f'{multiplier:.2f}x')}`\n\n"
+        f"{outcome}\n\n"
+        f"🏦 New balance\: {format_trx_escaped(balance_after)}\n"
+        f"🆔 Game ID\: `{escape_markdown_v2(str(game_id))}`\n"
+    )
+
+
+def msg_bet_in_progress() -> str:
+    return r"⏳ *A bet is already in progress\\.* Please finish it before starting a new one\."
