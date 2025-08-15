@@ -10,11 +10,13 @@ from bot.keyboards import (
     Q_A_BTN, ALL_TRANSACTIONS_BTN, DEPOSITS_ONLY_BTN,
     WITHDRAWALS_ONLY_BTN,
     PLAY_BTN,
+    ADMIN_BTN,
 )
 
 from bot.handlers import withdrawal_handler
 from bot.handlers import start_handler, settings_handler, deposit_handler, referral_handlers as referral_handler
 from bot.handlers import game_handlers
+from bot.handlers import admin_handlers
 from utils.logger import logger
 
 
@@ -52,6 +54,8 @@ async def route_text_message(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await referral_handler.handle_referral(update, context)
     elif text == PLAY_BTN:
         await game_handlers.handle_play(update, context)
+    elif text == ADMIN_BTN:
+        await admin_handlers.handle_admin_main(update, context)
     elif "withdraw" in context.user_data:
         await withdrawal_handler.handle_withdraw_free_text(update, context)
     elif "play" in context.user_data:
