@@ -24,6 +24,8 @@ from bot.handlers.referral_handlers import handle_referral, handle_referral_info
 from bot.handlers.message_router import route_text_message, handle_error
 from bot.handlers.settings_handler import handle_settings, back_to_main_menu, handle_help, handle_about, handle_support, handle_qa
 from bot.handlers import game_handlers
+from bot.handlers.challenge_handlers import handle_challenges, handle_challenges_callback
+from bot.handlers.leaderboard_handlers import handle_leaderboard, handle_leaderboard_callback
 from workers.deposit_monitor import run_deposit_monitor
 from workers.withdrawal_processor import run_withdrawal_processor
 
@@ -52,6 +54,8 @@ async def setup_bot():
     app.add_handler(CommandHandler("balance", handle_balance))
     app.add_handler(CommandHandler("withdraw", handle_withdraw))
     app.add_handler(CommandHandler("referral", handle_referral))
+    app.add_handler(CommandHandler("challenges", handle_challenges))
+    app.add_handler(CommandHandler("leaderboard", handle_leaderboard))
     app.add_handler(CommandHandler("history", handle_history))
     app.add_handler(CommandHandler("help", handle_help))
     app.add_handler(CommandHandler("settings", handle_settings))
@@ -69,6 +73,8 @@ async def setup_bot():
     app.add_handler(CallbackQueryHandler(handle_referral_info, pattern=r"^referral_info$"))
     app.add_handler(CallbackQueryHandler(handle_referral_callback, pattern=r"^(?:ref_hist_page_|ref_lb_page_)\d+$"))
     app.add_handler(CallbackQueryHandler(game_handlers.handle_play_callback, pattern=r"^play_"))
+    app.add_handler(CallbackQueryHandler(handle_challenges_callback, pattern=r"^(?:chal_page_\d+|chal_claim_\d+)$"))
+    app.add_handler(CallbackQueryHandler(handle_leaderboard_callback, pattern=r"^(?:lb_period_.*|lb_metric_.*|lb_.*_page_\d+)$"))
     
     # Error handler
     app.add_error_handler(handle_error)
