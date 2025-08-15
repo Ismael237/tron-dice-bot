@@ -105,6 +105,7 @@ class TransactionType(enum.Enum):
     bet = 'bet'
     payout = 'payout'
     custom = 'custom'
+    bonus = 'bonus'
 
 
 class TransactionStatus(enum.Enum):
@@ -152,6 +153,7 @@ class User(BaseModel):
     biggest_win = Column(Numeric(precision=18, scale=6), default=0, nullable=False)
     biggest_loss = Column(Numeric(precision=18, scale=6), default=0, nullable=False)
     first_bet_bonus_used = Column(Boolean, default=False, nullable=False)
+    first_deposit_bonus_used = Column(Boolean, default=False, nullable=False)
     last_activity_at = Column(DateTime, nullable=True)
     
     # Relationships
