@@ -280,6 +280,26 @@ class ReferralService:
         with get_db_session() as session:
             return session.query(User).filter_by(sponsor_id=user_id).all()
 
+    # ---------------------- Leaderboard ----------------------
+    @staticmethod
+    def get_referral_leaderboard(limit: int = 100) -> List[Dict[str, Any]]:
+        """Return top users by total referral earnings (all-time)."""
+        with get_db_session() as session:
+            rows = (
+                session.query(User)
+                .order_by(User.total_referral_earnings.desc())
+                .limit(limit)
+                .all()
+            )
+            return [
+                {
+                    "user_id": u.id,
+                    "username": u.username,
+                    "total": float(Decimal(u.total_referral_earnings or 0)),
+                }
+                for u in rows
+            ]
+
 
 # Backward-compatible forwarders to preserve existing routing (Telegram logic in handlers)
 async def handle_referral(update, context):
