@@ -102,6 +102,8 @@ class TransactionType(enum.Enum):
     withdrawal = 'withdrawal'
     referral_commission = 'referral_commission'
     fee = 'fee'
+    bet = 'bet'
+    payout = 'payout'
     custom = 'custom'
 
 

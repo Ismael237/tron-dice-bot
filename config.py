@@ -42,5 +42,10 @@ LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 LOG_FILE = os.getenv('LOG_FILE', 'logs/bot_marketplace.log')
 ERROR_LOG_FILE = os.getenv('ERROR_LOG_FILE', 'logs/errors.log')
 
+# Game Settings (centralized)
+HOUSE_EDGE = float(os.getenv('HOUSE_EDGE', 0.02))
+MIN_BET_AMOUNT = float(os.getenv('MIN_BET_AMOUNT', 1))
+MAX_BET_AMOUNT = float(os.getenv('MAX_BET_AMOUNT', 1000))
+
 # APScheduler
 AP_SCHEDULER_THREAD_POOL_SIZE = int(os.getenv('AP_SCHEDULER_THREAD_POOL_SIZE', 5))
