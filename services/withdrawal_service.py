@@ -9,6 +9,7 @@ from database.models import (
     Transaction,
     TransactionType,
     TransactionStatus,
+    Notification,
 )
 from utils.helpers import get_utc_date, get_utc_time
 from config import DAILY_WITHDRAWAL_LIMIT, MIN_WITHDRAWAL_AMOUNT, WITHDRAWAL_FEE_RATE
@@ -40,10 +41,27 @@ class WithdrawalService:
                 user = session.query(User).get(user_id)
                 if not user:
                     raise ValueError("User not found")
+                if not user.is_active:
+                    raise ValueError("Account is not active")
+                if not is_valid_tron_address(to_address):
+                    raise ValueError("Invalid TRON address")
 
+                # Basic amount validations
+                if amount < Decimal(str(MIN_WITHDRAWAL_AMOUNT)):
+                    raise ValueError("Amount below minimum withdrawal")
+                if amount > Decimal(str(DAILY_WITHDRAWAL_LIMIT)):
+                    raise ValueError("Amount exceeds daily limit")
                 if Decimal(user.account_balance) < amount:
                     raise ValueError("Insufficient balance")
-                
+
+                # Anti-fraud: limit number/value of pending withdrawals
+                pending_count = session.query(Withdrawal).filter(
+                    Withdrawal.user_id == user_id,
+                    Withdrawal.status.in_([WithdrawalStatus.pending, WithdrawalStatus.processing])
+                ).count()
+                if pending_count >= 3:
+                    raise ValueError("Too many pending withdrawals")
+
                 user.account_balance -= amount
                 fee_rate = Decimal(str(WITHDRAWAL_FEE_RATE))
                 fee = (amount * fee_rate)
@@ -76,6 +94,14 @@ class WithdrawalService:
                     reference_id=str(withdrawal_id),
                 )
                 session.add(tx)
+                session.add(
+                    Notification(
+                        user_id=user_id,
+                        notification_type="withdrawal_requested",
+                        title="Withdrawal requested",
+                        message=f"-{amount} TRX pending",
+                    )
+                )
                 session.commit()
                 session.refresh(tx)
                 return tx
@@ -132,6 +158,15 @@ class WithdrawalService:
                 ).first()
                 if tx_record:
                     tx_record.description = f"Withdrawal {tx_hash}"
+                # Notify user
+                session.add(
+                    Notification(
+                        user_id=user_id,
+                        notification_type="withdrawal_completed",
+                        title="Withdrawal completed",
+                        message=f"-{amount_trx} TRX sent (tx {tx_hash})",
+                    )
+                )
                 session.commit()
             except Exception:
                 session.rollback()
@@ -154,6 +189,15 @@ class WithdrawalService:
                 if tx_record:
                     suffix = f" (tx {tx_hash})" if tx_hash else ""
                     tx_record.description = f"Withdrawal failed: {reason}{suffix}"
+                # Notify user
+                session.add(
+                    Notification(
+                        user_id=user_id,
+                        notification_type="withdrawal_failed",
+                        title="Withdrawal failed",
+                        message=f"{reason}",
+                    )
+                )
                 session.commit()
             except Exception:
                 session.rollback()

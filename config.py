@@ -49,3 +49,12 @@ MAX_BET_AMOUNT = float(os.getenv('MAX_BET_AMOUNT', 1000))
 
 # APScheduler
 AP_SCHEDULER_THREAD_POOL_SIZE = int(os.getenv('AP_SCHEDULER_THREAD_POOL_SIZE', 5))
+
+# -------- Deposits & Bonuses --------
+# Required confirmations to mark a deposit as confirmed
+DEPOSIT_CONFIRMATIONS_REQUIRED = int(os.getenv('DEPOSIT_CONFIRMATIONS_REQUIRED', 19))
+
+# First deposit bonus configuration
+FIRST_DEPOSIT_BONUS_RATE = float(os.getenv('FIRST_DEPOSIT_BONUS_RATE', 0.10))  # 10%
+FIRST_DEPOSIT_BONUS_MIN = float(os.getenv('FIRST_DEPOSIT_BONUS_MIN', 10))      # minimum deposit to qualify
+FIRST_DEPOSIT_BONUS_MAX = float(os.getenv('FIRST_DEPOSIT_BONUS_MAX', 100))     # bonus cap in TRX

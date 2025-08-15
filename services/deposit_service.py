@@ -10,10 +10,17 @@ from database.models import (
     Transaction,
     TransactionType,
     TransactionStatus,
+    Notification,
 )
 from services.wallet_service import get_wallet
 from utils.helpers import get_utc_time
-from config import TELEGRAM_ADMIN_ID
+from config import (
+    TELEGRAM_ADMIN_ID,
+    DEPOSIT_CONFIRMATIONS_REQUIRED,
+    FIRST_DEPOSIT_BONUS_RATE,
+    FIRST_DEPOSIT_BONUS_MIN,
+    FIRST_DEPOSIT_BONUS_MAX,
+)
 
 
 class DepositService:
@@ -54,7 +61,11 @@ class DepositService:
                 if existing:
                     return existing
 
-                status = DepositStatus.confirmed if confirmations >= 19 else DepositStatus.pending
+                status = (
+                    DepositStatus.confirmed
+                    if confirmations >= int(DEPOSIT_CONFIRMATIONS_REQUIRED)
+                    else DepositStatus.pending
+                )
                 deposit = Deposit(
                     user_id=user_id,
                     wallet_id=wallet_id,
@@ -75,7 +86,9 @@ class DepositService:
 
     @staticmethod
     def credit_user_balance_and_log_tx(user_id: int, amount_trx: Decimal, reference_id: int, reference_tx_id: str) -> Transaction:
-        """Credits user's ad balance and records a deposit transaction."""
+        """Credits user's balance and records a deposit transaction.
+        Also creates a simple user notification and applies first-deposit bonus if eligible.
+        """
         with get_db_session() as session:
             try:
                 user = session.query(User).get(user_id)
@@ -94,6 +107,45 @@ class DepositService:
                     tx_hash=reference_tx_id,
                 )
                 session.add(tx)
+                # Create a basic notification for the user
+                session.add(
+                    Notification(
+                        user_id=user.id,
+                        notification_type="deposit_confirmed",
+                        title="Deposit confirmed",
+                        message=f"+{amount_trx} TRX credited",
+                    )
+                )
+                # Apply first-deposit bonus if eligible (idempotent via user flag)
+                if not user.first_deposit_bonus_used and amount_trx >= Decimal(str(FIRST_DEPOSIT_BONUS_MIN)):
+                    bonus_amount = amount_trx * Decimal(str(FIRST_DEPOSIT_BONUS_RATE))
+                    cap = Decimal(str(FIRST_DEPOSIT_BONUS_MAX))
+                    if bonus_amount > cap:
+                        bonus_amount = cap
+                    if bonus_amount > 0:
+                        user.account_balance += bonus_amount
+                        # Record a dedicated BONUS transaction
+                        session.add(
+                            Transaction(
+                                user_id=user.id,
+                                type=TransactionType.bonus,
+                                status=TransactionStatus.completed,
+                                amount_trx=bonus_amount,
+                                description=f"First deposit bonus for {reference_tx_id}",
+                                reference_id=str(reference_id),
+                            )
+                        )
+                        user.first_deposit_bonus_used = True
+                        # Notify user about the bonus
+                        session.add(
+                            Notification(
+                                user_id=user.id,
+                                notification_type="bonus_credited",
+                                title="First deposit bonus",
+                                message=f"+{bonus_amount} TRX bonus",
+                            )
+                        )
+
                 session.commit()
                 session.refresh(tx)
                 return tx
