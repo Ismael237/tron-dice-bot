@@ -9,6 +9,9 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_ADMIN_ID = os.getenv('TELEGRAM_ADMIN_ID')
 TELEGRAM_ADMIN_USERNAME = os.getenv('TELEGRAM_ADMIN_USERNAME')
 
+# Public bot username (for share links)
+BOT_USERNAME = os.getenv('BOT_USERNAME', TELEGRAM_ADMIN_USERNAME or '')
+
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 # Limits
@@ -27,8 +30,10 @@ DEPOSIT_TO_MAIN_WALLET_RATE = float(os.getenv('DEPOSIT_TO_MAIN_WALLET_RATE', 0.9
 # Withdrawal fee rate (e.g. 0.01 = 1%)
 WITHDRAWAL_FEE_RATE = float(os.getenv('WITHDRAWAL_FEE_RATE', 0.01))
 
-# Referral rate (e.g. 0.01 = 1%)
-REFERRAL_RATE = float(os.getenv('REFERRAL_RATE', 0.01))
+# Referral rate (e.g. 0.05 = 5%)
+REFERRAL_RATE = float(os.getenv('REFERRAL_RATE', 0.05))
+# Minimal net win required to trigger a commission (TRX)
+REFERRAL_MIN_NET_FOR_COMMISSION = float(os.getenv('REFERRAL_MIN_NET_FOR_COMMISSION', 1))
 
 # Worker Configuration (in minutes)
 DEPOSIT_CHECK_INTERVAL = int(os.getenv('DEPOSIT_CHECK_INTERVAL', 4))
