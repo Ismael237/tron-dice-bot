@@ -8,6 +8,7 @@ import atexit
 from config import (
     TELEGRAM_BOT_TOKEN, DATABASE_URL,
     DEPOSIT_CHECK_INTERVAL, WITHDRAWAL_PROCESS_INTERVAL,
+    CHALLENGE_UPDATE_INTERVAL, LEADERBOARD_UPDATE_INTERVAL,
     AP_SCHEDULER_THREAD_POOL_SIZE
 )
 from database.database import init_database
@@ -28,6 +29,8 @@ from bot.handlers.challenge_handlers import handle_challenges, handle_challenges
 from bot.handlers.leaderboard_handlers import handle_leaderboard, handle_leaderboard_callback
 from workers.deposit_monitor import run_deposit_monitor
 from workers.withdrawal_processor import run_withdrawal_processor
+from workers.challenge_worker import run_challenge_worker
+from workers.leaderboard_worker import run_leaderboard_worker
 
 def start_scheduler():
     jobstores = {'default': SQLAlchemyJobStore(url=DATABASE_URL)}
@@ -37,6 +40,11 @@ def start_scheduler():
     # cron job
     scheduler.add_job(run_deposit_monitor, 'interval', minutes=DEPOSIT_CHECK_INTERVAL, id='monitor_deposits', replace_existing=True)
     scheduler.add_job(run_withdrawal_processor, 'interval', minutes=WITHDRAWAL_PROCESS_INTERVAL, id='process_withdrawals', replace_existing=True)
+    # Challenges: periodic updates + daily reset at 00:00 UTC
+    scheduler.add_job(run_challenge_worker, 'interval', minutes=CHALLENGE_UPDATE_INTERVAL, id='challenge_updates', replace_existing=True)
+    scheduler.add_job(run_challenge_worker, 'cron', hour=0, minute=0, id='challenge_daily_reset', replace_existing=True)
+    # Leaderboard: periodic aggregation and notifications
+    scheduler.add_job(run_leaderboard_worker, 'interval', minutes=LEADERBOARD_UPDATE_INTERVAL, id='leaderboard_updates', replace_existing=True)
     
     scheduler.start()
     logger.info("[Scheduler] APScheduler started with persistent jobs.")
