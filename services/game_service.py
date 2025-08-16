@@ -6,7 +6,7 @@ from threading import Lock
 from typing import Optional, Dict
 
 from database.database import get_db_session
-from database.models import User, Transaction, TransactionType
+from database.models import TransactionStatus, User, Transaction, TransactionType
 from services.fairness_service import FairnessService
 from config import HOUSE_EDGE, MIN_BET_AMOUNT, MAX_BET_AMOUNT
 from utils.helpers import get_utc_time
@@ -125,10 +125,11 @@ class GameService:
                     cls._ensure_sufficient_balance(user, bet_amount)
                     user.account_balance = (Decimal(user.account_balance) - bet_amount).quantize(cls.TRX_PRECISION)
 
-                    # Record bet transaction (custom type)
+                    # Record bet transaction
                     bet_tx = Transaction(
                         user_id=user_id,
                         type=TransactionType.bet,
+                        status=TransactionStatus.completed,
                         amount_trx=bet_amount,
                         description=f"Bet placed: target={target_number}",
                         reference_id=None,
@@ -177,6 +178,7 @@ class GameService:
                         payout_tx = Transaction(
                             user_id=user_id,
                             type=TransactionType.payout,
+                            status=TransactionStatus.completed,
                             amount_trx=win_amount,
                             description=f"Payout for game #{game.id}",
                             reference_id=str(game.id),

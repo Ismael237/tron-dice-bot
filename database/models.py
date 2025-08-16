@@ -3,11 +3,10 @@ Database models
 Defines all database tables and relationships
 Integrates base models, utilities, and models
 """
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Numeric, Enum, Boolean, Text, Date, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Numeric, Enum, Boolean, Text, Date, UniqueConstraint, JSON
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import relationship, Session
 import enum
-from sqlalchemy.dialects.postgresql import JSONB
 from datetime import date
 from utils.helpers import get_utc_time
 
@@ -366,7 +365,7 @@ class Notification(BaseModel):
     title = Column(String(200), nullable=False)
     message = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False, nullable=False)
-    data = Column(JSONB, nullable=True)  # Additional data
+    data = Column(JSON, nullable=True)  # Additional data; cross-dialect JSON for SQLite/Postgres
 
     # Relationships
     user = relationship("User", back_populates="notifications")

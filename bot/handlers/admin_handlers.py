@@ -1,6 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
+import re
 
 from config import ITEMS_PER_PAGE, EMERGENCY_STOP
 from services.admin_service import AdminService
@@ -11,10 +12,9 @@ from bot.messages import (
     msg_admin_users_page,
     msg_admin_games_page,
     msg_admin_alerts_page,
-    msg_admin_controls_hint,
 )
 from bot.keyboards import (
-    admin_main_inline_keyboard,
+    admin_reply_keyboard,
     admin_pagination_inline_keyboard,
     admin_controls_inline_keyboard,
 )
@@ -36,6 +36,17 @@ async def _require_admin(update: Update) -> bool:
     return True
 
 
+def _extract_page_from_text(text: str | None) -> int:
+    """Extract current page number from a header pattern like '(Page 2/5)'. Defaults to 1."""
+    if not text:
+        return 1
+    m = re.search(r"\(Page\s+(\d+)\/(\d+)\)", text)
+    try:
+        return int(m.group(1)) if m else 1
+    except Exception:
+        return 1
+
+
 # ============== Commands and main entry ==============
 
 async def handle_admin_main(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -43,13 +54,13 @@ async def handle_admin_main(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     if update.message:
         await update.message.reply_markdown_v2(
-            msg_admin_main(), reply_markup=admin_main_inline_keyboard()
+            msg_admin_main(), reply_markup=admin_reply_keyboard()
         )
     else:
         q = update.callback_query
         await q.answer()
         await q.edit_message_text(
-            msg_admin_main(), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=admin_main_inline_keyboard()
+            msg_admin_main(), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=admin_reply_keyboard()
         )
 
 
@@ -69,15 +80,18 @@ async def handle_admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def handle_admin_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await _require_admin(update):
         return
-    # Determine page
     page = 1
     if update.callback_query:
-        try:
-            # pattern: admin_users_page_{n}
-            _, section, _, page_str = update.callback_query.data.split("_")
-            page = int(page_str)
-        except Exception:
-            page = 1
+        data = (update.callback_query.data or "").strip()
+        if data.endswith("_refresh"):
+            page = _extract_page_from_text(update.callback_query.message.text)
+        else:
+            try:
+                # pattern: admin_users_page_{n}
+                _, section, _, page_str = data.split("_")
+                page = int(page_str)
+            except Exception:
+                page = 1
     rows, total_pages = AdminService.list_users(page, ITEMS_PER_PAGE)
     text = msg_admin_users_page(rows, page, total_pages)
     kb = admin_pagination_inline_keyboard(page, total_pages, "users")
@@ -94,11 +108,15 @@ async def handle_admin_games(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
     page = 1
     if update.callback_query:
-        try:
-            _, section, _, page_str = update.callback_query.data.split("_")
-            page = int(page_str)
-        except Exception:
-            page = 1
+        data = (update.callback_query.data or "").strip()
+        if data.endswith("_refresh"):
+            page = _extract_page_from_text(update.callback_query.message.text)
+        else:
+            try:
+                _, section, _, page_str = data.split("_")
+                page = int(page_str)
+            except Exception:
+                page = 1
     rows, total_pages = AdminService.list_games(page, ITEMS_PER_PAGE)
     text = msg_admin_games_page(rows, page, total_pages)
     kb = admin_pagination_inline_keyboard(page, total_pages, "games")
@@ -115,11 +133,15 @@ async def handle_admin_alerts(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
     page = 1
     if update.callback_query:
-        try:
-            _, section, _, page_str = update.callback_query.data.split("_")
-            page = int(page_str)
-        except Exception:
-            page = 1
+        data = (update.callback_query.data or "").strip()
+        if data.endswith("_refresh"):
+            page = _extract_page_from_text(update.callback_query.message.text)
+        else:
+            try:
+                _, section, _, page_str = data.split("_")
+                page = int(page_str)
+            except Exception:
+                page = 1
     rows, total_pages = AdminService.list_alerts(page, ITEMS_PER_PAGE)
     text = msg_admin_alerts_page(rows, page, total_pages)
     kb = admin_pagination_inline_keyboard(page, total_pages, "alerts")

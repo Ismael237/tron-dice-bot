@@ -295,6 +295,7 @@ class ReferralService:
                 {
                     "user_id": u.id,
                     "username": u.username,
+                    "first_name": u.first_name,
                     "total": float(Decimal(u.total_referral_earnings or 0)),
                 }
                 for u in rows

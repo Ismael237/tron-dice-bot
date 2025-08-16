@@ -94,11 +94,11 @@ def msg_withdraw_submitted(amount_trx: str, remaining_limit_trx: str) -> str:
 
 
 def msg_withdraw_cancelled() -> str:
-    return "❌ *Withdrawal cancelled\\."
+    return "❌ *Withdrawal cancelled\\.*"
 
 
 def msg_session_expired() -> str:
-    return "❌ *Withdrawal session expired\\."
+    return "❌ *Withdrawal session expired\\.*"
 
 # Worker notifications for withdrawal processing
 def msg_withdrawal_processed(amount_trx: Decimal, tx_id: str) -> str:
@@ -290,9 +290,18 @@ def msg_history_page(transactions, page: int, total_pages: int) -> str:
     emoji_map = {
         "deposit": "➕",
         "withdrawal": "➖",
-        "investment": "💼",
-        "reward": "💸",
-        "commission": "🎁",
+        "bet": "🎲",
+        "payout": "🏆",
+        "bonus": "✨",
+        "referral_commission": "🎁",
+    }
+    type_name_map = {
+        "deposit": "Deposit",
+        "withdrawal": "Withdrawal",
+        "bet": "Bet",
+        "payout": "Payout",
+        "bonus": "Bonus",
+        "referral_commission": "Commission",
     }
     status_emoji = {
         "pending": "⏳",
@@ -305,12 +314,13 @@ def msg_history_page(transactions, page: int, total_pages: int) -> str:
         type_key = getattr(getattr(tx, 'type', None), 'value', str(getattr(tx, 'type', ''))).lower()
         status_key = getattr(getattr(tx, 'status', None), 'value', str(getattr(tx, 'status', ''))).lower()
         type_emoji = emoji_map.get(type_key, "🔹")
+        type_label = type_name_map.get(type_key, getattr(getattr(tx, 'type', None), 'value', ''))
         stat_emoji = status_emoji.get(status_key, "🔸")
         lines.extend([
-            f"  {type_emoji} *Type*\\: {escape_markdown_v2(getattr(getattr(tx, 'type', None), 'value', ''))}\n",
-            f"  📅 *Date*\\: `{escape_markdown_v2(format_date(tx.created_at))}`\n",
-            f"  💵 *Amount*\\: {format_trx_escaped(tx.amount_trx)}\n",
-            f"  {stat_emoji} *Status*\\: _{escape_markdown_v2(getattr(getattr(tx, 'status', None), 'value', ''))}_\n",
+            f"  {type_emoji} *Type*\: {escape_markdown_v2(type_label)}\n",
+            f"  📅 *Date*\: `{escape_markdown_v2(format_date(tx.created_at))}`\n",
+            f"  💵 *Amount*\: {format_trx_escaped(tx.amount_trx)}\n",
+            f"  {stat_emoji} *Status*\: _{escape_markdown_v2(getattr(getattr(tx, 'status', None), 'value', ''))}_\n",
             f"{sep}\n",
         ])
 
@@ -469,7 +479,7 @@ def msg_referral_history_page(rows: list[ReferralCommission], page: int, total_p
     """Render a page of referral commissions history."""
     sep = get_separator()
     lines = [
-        f"👥 *Referral Commissions* (Page {page}/{total_pages})\n",
+        f"👥 *Referral Commissions* \\(Page {page}/{total_pages}\\)\n",
         f"{sep}\n",
     ]
     if not rows:
@@ -491,7 +501,7 @@ def msg_referral_leaderboard_page(rows: list[dict], page: int, total_pages: int)
     """Render a leaderboard page for referral earnings."""
     sep = get_separator()
     lines = [
-        f"🏆 *Referral Leaderboard* (Page {page}/{total_pages})\n",
+        f"🏆 *Referral Leaderboard* \\(Page {page}/{total_pages}\\)\n",
         f"{sep}\n",
     ]
     if not rows:
@@ -499,10 +509,10 @@ def msg_referral_leaderboard_page(rows: list[dict], page: int, total_pages: int)
         return "".join(lines)
     rank = (page - 1) * 5 + 1
     for r in rows:
-        username = r.get('username') or f"User {r.get('user_id')}"
+        username = f"@{r.get('username')}" if r.get('username') else r.get('first_name') or f"User {r.get('user_id')}"
         total = r.get('total', 0.0)
         lines.append(
-            f"{rank}. `{escape_markdown_v2(str(username))}` — {format_trx_escaped(Decimal(str(total)))}\n"
+            f"\\#{rank}\\. {escape_markdown_v2(str(username))} — {format_trx_escaped(Decimal(str(total)))}\n"
         )
         rank += 1
     return "".join(lines)
@@ -518,12 +528,12 @@ def msg_play_intro(balance_trx: str, min_bet: str, max_bet: str) -> str:
         f"💳 Balance\: {escape_markdown_v2(balance_trx)}\n"
         f"🔻 Min bet\: {escape_markdown_v2(min_bet)}\n"
         f"🔺 Max bet\: {escape_markdown_v2(max_bet)}\n\n"
-        "Select a preset amount below or type a custom amount\, then send your target number\."
+        "Select a preset amount below or type a custom amount, then send your target number\."
     )
 
 
 def msg_invalid_bet_amount_play() -> str:
-    return r"❌ *Invalid bet amount\\.* Please enter a numeric value within limits\."
+    return "❌ *Invalid bet amount\\.* Please enter a numeric value within limits\\."
 
 
 def msg_enter_target_number(amount_trx: str) -> str:
@@ -531,12 +541,12 @@ def msg_enter_target_number(amount_trx: str) -> str:
         "🎯 *Enter your target number*\n\n"
         f"Bet\: {escape_markdown_v2(amount_trx)}\n"
         "Range\: 1\-100\n"
-        "Tip\: Higher target = bigger multiplier but lower win chance\."
+        "Tip\: Higher target \= bigger multiplier but lower win chance\."
     )
 
 
 def msg_invalid_target_number() -> str:
-    return r"❌ *Invalid target\\.* Please type an integer between 1 and 100\."
+    return "❌ *Invalid target\\.* Please type an integer between 1 and 100\\."
 
 
 def msg_confirm_bet(bet_amount: str, target_number: str, multiplier: str, potential_win: str) -> str:
@@ -544,10 +554,10 @@ def msg_confirm_bet(bet_amount: str, target_number: str, multiplier: str, potent
     return (
         "⚠️ *CONFIRM YOUR BET*\n"
         f"{sep}\n\n"
-        f"💰 Bet\: {escape_markdown_v2(bet_amount)}\n"
-        f"🎯 Target\: {escape_markdown_v2(target_number)}\n"
-        f"📈 Multiplier\: {escape_markdown_v2(multiplier)}\n"
-        f"🏆 Potential win\: {escape_markdown_v2(potential_win)}\n\n"
+        f"💰 Bet\: {escape_markdown_v2(str(bet_amount))}\n"
+        f"🎯 Target\: {escape_markdown_v2(str(target_number))}\n"
+        f"📈 Multiplier\: {escape_markdown_v2(str(multiplier))}\n"
+        f"🏆 Potential win\: {escape_markdown_v2(str(potential_win))}\n\n"
         "Use the buttons to adjust target or confirm/cancel\."
     )
 
@@ -563,16 +573,17 @@ def msg_game_result(
     balance_after: Decimal,
 ) -> str:
     sep = get_separator()
-    outcome = "🎉 *YOU WON\!*" if is_winner else "😔 *You lost\.*"
+    outcome = "✅✅✅ *YOU WON\!*" if is_winner else "❌❌❌ *YOU LOST\.*"
+    header = "🏆 *WIN*" if is_winner else "💥 *LOSS*"
     return (
-        "🎲 *GAME RESULT*\n"
+        f"{header}\n"
         f"{sep}\n\n"
+        f"{outcome}\n\n"
         f"🎯 Target\: `{escape_markdown_v2(str(target_number))}`\n"
         f"🎲 Result\: `{escape_markdown_v2(str(result_number))}`\n"
         f"💰 Bet\: {format_trx_escaped(bet_amount)}\n"
         f"🏆 Win\: {format_trx_escaped(win_amount)}\n"
         f"📈 Multiplier\: `{escape_markdown_v2(f'{multiplier:.2f}x')}`\n\n"
-        f"{outcome}\n\n"
         f"🏦 New balance\: {format_trx_escaped(balance_after)}\n"
         f"🆔 Game ID\: `{escape_markdown_v2(str(game_id))}`\n"
     )
@@ -581,6 +592,29 @@ def msg_game_result(
 def msg_bet_in_progress() -> str:
     return r"⏳ *A bet is already in progress\\.* Please finish it before starting a new one\."
 
+
+def msg_play_cancelled() -> str:
+    sep = get_separator()
+    return (
+        "❌ *Bet cancelled*\n"
+        f"{sep}\n\n"
+        "You have been returned to the main menu\.\n"
+        "Tap a button below to continue\."
+    )
+
+
+def msg_insufficient_balance_play(balance_trx: str, needed_trx: str) -> str:
+    sep = get_separator()
+    b = escape_markdown_v2(balance_trx)
+    n = escape_markdown_v2(needed_trx)
+    return (
+        "❌ *INSUFFICIENT BALANCE*\n"
+        f"{sep}\n\n"
+        f"Your current balance is `{b}` but you attempted to bet `{n}`\.\n"
+        "You need to deposit more TRX to continue\!\n\n"
+        "🏦 Use /deposit to get your personal address, then send TRX\.\n"
+        "After confirmations, your balance will be updated automatically\."
+    )
 
 # ============================ CHALLENGES MESSAGES ============================
 
@@ -600,7 +634,7 @@ def msg_challenges_page(items: list[dict], page: int, total_pages: int) -> str:
     """
     sep = get_separator()
     lines = [
-        f"🎁 *Daily Challenges* (Page {page}/{total_pages})\n",
+        f"🎁 *Daily Challenges* \\(Page {page}/{total_pages}\\)\n",
         f"{sep}\n",
     ]
     if not items:
@@ -621,19 +655,18 @@ def msg_challenges_page(items: list[dict], page: int, total_pages: int) -> str:
         t = escape_markdown_v2(str(it.get("type", "-")))
         target = escape_markdown_v2(str(it.get("target", 0)))
         prog_val = it.get("progress", 0)
-        is_completed = bool(it.get("is_completed", False))
-        reward_claimed = bool(it.get("reward_claimed", False))
         reward = format_trx_escaped(it.get("reward_amount", 0))
+        reward_claimed = "\\(✅ Claimed\\)" if it.get("reward_claimed", False) else ""
+        reward_status = "⏳ In progress" if it.get("is_completed", False) else "✅ Completed"
         bar = _fmt_bar(float(prog_val or 0), float(it.get("target", 0) or 0))
         lines.extend([
             f"• *{name}* — _{t}_\n",
             f"  {desc}\n",
-            f"  📈 `{escape_markdown_v2(str(prog_val))}` / `{target}`  [{escape_markdown_v2(bar)}]\n",
-            f"  🎁 Reward: {reward}  —  {'✅ Completed' if is_completed else '⏳ In progress'}{' (claimed)' if reward_claimed else ''}\n",
+            f"  📈 `{escape_markdown_v2(str(prog_val))}` / `{target}`  \\[{escape_markdown_v2(bar)}\\]\n",
+            f"  🎁 Reward: {reward}  —  {reward_status}{reward_claimed}\n",
             f"{sep}\n",
         ])
     return "".join(lines)
-
 
 # ============================ GAME LEADERBOARD MESSAGES ============================
 
@@ -648,7 +681,7 @@ def msg_game_leaderboard_page(rows: list[dict], page: int, total_pages: int, per
     title_map = {"daily": "Daily", "weekly": "Weekly", "monthly": "Monthly"}
     metric_map = {"won": "Top Winnings", "wagered": "Top Volume"}
     lines = [
-        f"🏆 *{escape_markdown_v2(title_map.get(period, period).upper())} {escape_markdown_v2(metric_map.get(metric, metric))}* (Page {page}/{total_pages})\n",
+        f"🏆 *{escape_markdown_v2(title_map.get(period, period).upper())} {escape_markdown_v2(metric_map.get(metric, metric))}* \\(Page {page}/{total_pages}\\)\n",
         f"{sep}\n",
     ]
     if not rows:
@@ -663,12 +696,12 @@ def msg_game_leaderboard_page(rows: list[dict], page: int, total_pages: int, per
             val = format_trx_escaped(r.get("total_won", 0))
         else:
             val = format_trx_escaped(r.get("total_wagered", 0))
-        lines.append(f"{rank}. `{username}` — {val}\n")
+        lines.append(f"{rank}\\. `{username}` — {val}\n")
 
     if user_pos is not None:
         val_str = format_trx_escaped(user_value or 0)
         lines.extend([
-            f"\n📍 Your position: `#{escape_markdown_v2(str(user_pos))}` — {val_str}\n",
+            f"\n📍 Your position\\: `\\#{escape_markdown_v2(str(user_pos))}` — {val_str}\n",
         ])
     return "".join(lines)
 
@@ -683,7 +716,11 @@ def msg_admin_main() -> str:
     return (
         "🛠️ *ADMIN PANEL*\n"
         f"{sep}\n\n"
-        "Use the inline buttons below to navigate\."
+        "Welcome, admin\! Use the buttons below to navigate\:\n\n"
+        "• 📊 Stats — Platform overview\n"
+        "• 👤 Users — Accounts & balances\n"
+        "• 🎲 Games — Recent games\n"
+        "• 🚨 Alerts — System notices\n"
     )
 
 
@@ -698,53 +735,42 @@ def msg_admin_stats(overall: dict, emergency_stop: bool) -> str:
     vol = format_trx_escaped(overall.get("vol_today", 0))
     rev = format_trx_escaped(overall.get("rev_today", 0))
     hot = format_trx_escaped(overall.get("hot_wallet_trx", 0))
-    status = "🛑 Games: DISABLED" if emergency_stop else "▶️ Games: ENABLED"
+    status = "🛑 Games\\: DISABLED" if emergency_stop else "▶️ Games\\: ENABLED"
     return (
-        "📊 *Admin Stats*\n"
+        "📊 *ADMIN STATS*\n"
         f"{sep}\n\n"
-        f"👥 Users Total: `{_fmt_num(overall.get('users_total', 0))}`\n"
-        f"✅ Active Users: `{_fmt_num(overall.get('users_active', 0))}`\n"
-        f"🎲 Games Today: `{_fmt_num(overall.get('games_today', 0))}`\n"
-        f"📊 Volume Today: {vol}\n"
-        f"🏦 Revenue Today: {rev}\n"
-        f"💼 Hot Wallet: {hot}\n\n"
-        f"{escape_markdown_v2(status)}"
+        f"👥 Users Total\\: `{_fmt_num(overall.get('users_total', 0))}`\n"
+        f"✅ Active Users\\: `{_fmt_num(overall.get('users_active', 0))}`\n"
+        f"🎲 Games Today\\: `{_fmt_num(overall.get('games_today', 0))}`\n"
+        f"📈 Volume Today\\: {vol}\n"
+        f"🏦 Revenue Today\\: {rev}\n"
+        f"💼 Hot Wallet\\: {hot}\n\n"
+        f"{status}"
     )
 
 
 def msg_admin_users_page(rows: list[dict], page: int, total_pages: int) -> str:
     sep = get_separator()
     lines = [
-        f"👤 *Users* (Page {page}/{total_pages})\n",
-        f"{sep}\n",
+        f"👤 *USERS* \\(Page {page}/{total_pages}\\)\n",
+        f"{sep}\n\n",
     ]
     if not rows:
         lines.append("_No users found\._\n")
         return "".join(lines)
+    
     for u in rows:
-        uname = u.get('username') or f"User {u.get('id')}"
+        username = u.get('username') or f"User {u.get('id')}"
+        user_id = escape_markdown_v2(str(u.get('id')))
+        balance = format_trx_escaped(u.get('account_balance', 0))
+        games_played = escape_markdown_v2(str(u.get('total_games_played', 0)))
+        
         lines.extend([
-            f"• `{escape_markdown_v2(str(uname))}` — ID:`{escape_markdown_v2(str(u.get('id')))}" + "`\n",
-            f"  💵 Balance: {format_trx_escaped(u.get('account_balance', 0))}  |  🎲 Played: `{escape_markdown_v2(str(u.get('total_games_played', 0)))}`\n",
-        ])
-    return "".join(lines)
-
-
-def msg_admin_games_page(rows: list[dict], page: int, total_pages: int) -> str:
-    sep = get_separator()
-    lines = [
-        f"🎲 *Games* (Page {page}/{total_pages})\n",
-        f"{sep}\n",
-    ]
-    if not rows:
-        lines.append("_No games found\._\n")
-        return "".join(lines)
-    for g in rows:
-        is_win = bool(g.get('is_winner'))
-        outcome = "✅ WIN" if is_win else "❌ LOSS"
-        lines.extend([
-            f"• ID:`{escape_markdown_v2(str(g.get('id')))}" + "`  👤 `{escape_markdown_v2(str(g.get('username') or g.get('user_id')))}" + "`  🎯 `{escape_markdown_v2(str(g.get('target_number', '-')))}" + "`  🎲 `{escape_markdown_v2(str(g.get('result_number', '-')))}" + "`\n",
-            f"  💰 Bet: {format_trx_escaped(g.get('bet_amount', 0))}  🏆 Win: {format_trx_escaped(g.get('win_amount', 0))}  — {escape_markdown_v2(outcome)}\n",
+            f"• *{escape_markdown_v2(username)}*\n",
+            f"  🆔 ID\\: `{user_id}`\n",
+            f"  💰 Balance\\: {balance}\n", 
+            f"  🎮 Games played\\: `{games_played}`\n",
+            f"{sep}\n",
         ])
     return "".join(lines)
 
@@ -752,19 +778,98 @@ def msg_admin_games_page(rows: list[dict], page: int, total_pages: int) -> str:
 def msg_admin_alerts_page(rows: list[dict], page: int, total_pages: int) -> str:
     sep = get_separator()
     lines = [
-        f"🚨 *Alerts* (Page {page}/{total_pages})\n",
-        f"{sep}\n",
+        f"🚨 *ALERTS* \\(Page {page}/{total_pages}\\)\n",
+        f"{sep}\n\n",
     ]
     if not rows:
         lines.append("_No alerts\._\n")
         return "".join(lines)
     for a in rows:
+        title = escape_markdown_v2(a.get('title', 'Alert'))
+        msg = escape_markdown_v2(a.get('message', ''))
+        created = a.get('created_at')
+        status = "🔴" if not a.get('is_read') else "🟢"
         lines.extend([
-            f"• `{escape_markdown_v2(a.get('title', 'Alert'))}`\n",
-            f"  {escape_markdown_v2(a.get('message', ''))}\n",
+            f"{status} *{title}*\n",
+            f"    {msg}\n",
+            f"    📅 {escape_markdown_v2(format_date(created))}\n" if created else "",
+            f"{sep}\n",
         ])
+    return "".join(lines)
+
+
+def msg_admin_games_page(rows: list[dict], page: int, total_pages: int) -> str:
+    sep = get_separator()
+    lines = [
+        f"🎲 *GAMES* \\(Page {page}/{total_pages}\\)\n",
+        f"{sep}\n\n",
+    ]
+    if not rows:
+        lines.append("_No games found\._\n")
+        return "".join(lines)
+    for g in rows:
+        is_win = bool(g.get('is_winner'))
+        outcome = "✅ WIN" if is_win else "❌ LOSS"
+        game_id = escape_markdown_v2(str(g.get('id')))
+        username = escape_markdown_v2(str(g.get('username') or g.get('user_id')))
+        target = escape_markdown_v2(str(g.get('target_number', '-')))
+        result = escape_markdown_v2(str(g.get('result_number', '-')))
+        bet = format_trx_escaped(g.get('bet_amount', 0))
+        win = format_trx_escaped(g.get('win_amount', 0))
+        ts = g.get('created_at')
+        
+        lines.extend([
+            f"• *Game \\#{game_id}*\n",
+            f"  👤 Player\\: `{username}`\n", 
+            f"  🎯 Target\\: `{target}`\n",
+            f"  🎲 Result\\: `{result}`\n",
+            f"  💰 Bet\\: {bet}\n",
+            f"  🏆 Win\\: {win}\n",
+            f"  📊 Outcome\\: {escape_markdown_v2(outcome)}\n",
+        ])
+        
+        if ts:
+            lines.append(f"  📅 Date\\: `{escape_markdown_v2(format_date(ts))}`\n")
+            
+        lines.append(f"{sep}\n")
     return "".join(lines)
 
 
 def msg_admin_controls_hint() -> str:
     return "Use the button below to toggle emergency stop\."
+
+# ============================ USER STATS MESSAGES ============================
+def msg_user_stats(
+    balance: Decimal | float | str,
+    games_played: int,
+    games_won: int,
+    biggest_win: Decimal | float | str,
+    biggest_loss: Decimal | float | str,
+    total_wagered: Decimal | float | str,
+    total_won: Decimal | float | str,
+) -> str:
+    sep = get_separator()
+    # Coerce and format values
+    try:
+        win_rate = (float(games_won) / float(games_played) * 100.0) if games_played > 0 else 0.0
+    except Exception:
+        win_rate = 0.0
+    bal = format_trx_escaped(balance)
+    bw = format_trx_escaped(biggest_win)
+    bl = format_trx_escaped(biggest_loss)
+    twag = format_trx_escaped(total_wagered)
+    twon = format_trx_escaped(total_won)
+    gp = escape_markdown_v2(str(games_played))
+    gw = escape_markdown_v2(str(games_won))
+    wr = escape_markdown_v2(f"{win_rate:.1f}%")
+    return (
+        "📊 *YOUR STATS*\n"
+        f"{sep}\n\n"
+        f"💰 Current balance\\: {bal}\n"
+        f"🎮 Games played\\: `{gp}`\n"
+        f"🏆 Games won\\: `{gw}` \\({wr}\\)\n"
+        f"📈 Biggest win\\: {bw}\n"
+        f"📉 Biggest loss\\: {bl}\n"
+        f"💎 Total wagered\\: {twag}\n"
+        f"🎁 Total won\\: {twon}\n"
+    )
