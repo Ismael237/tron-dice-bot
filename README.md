@@ -4,7 +4,7 @@ A Telegram dice game bot built on the TRON (TRX) blockchain. Users bet on a 1–
 
 ## Version
 
-Current version: 1.0.0 (MVP)
+Current version: 0.9.0 (Alpha)
 
 ## Highlights
 
