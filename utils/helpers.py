@@ -13,13 +13,9 @@ def generate_share_link(bot_username: str, referral_code: str):
 
 
 def escape_markdown_v2(text: str) -> str:
-    """Sanitize text for Telegram MarkdownV2 by removing control characters.
-
-    This implementation guarantees idempotency and ensures no raw MarkdownV2
-    special characters remain, satisfying the security-oriented tests.
-    """
-    specials = r"\\`*_\[\]()~>#+=|{}.!-"
-    return re.sub(f"[{specials}]", "", text)
+    """Sanitize text for Telegram MarkdownV2 by removing control characters."""
+    escape_chars = r'\\`*_\[\]()~>#+=|{}.!-'
+    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
 
 
 def get_utc_time():
