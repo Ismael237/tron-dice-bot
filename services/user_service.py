@@ -65,4 +65,12 @@ class UserService:
                 query = query.filter_by(type=TransactionType.deposit)
             elif filter_key == "withdrawals":
                 query = query.filter_by(type=TransactionType.withdrawal)
+            elif filter_key == "bets":
+                query = query.filter_by(type=TransactionType.bet)
+            elif filter_key == "payouts":
+                query = query.filter_by(type=TransactionType.payout)
+            elif filter_key == "bonuses":
+                query = query.filter_by(type=TransactionType.bonus)
+            elif filter_key == "commissions":
+                query = query.filter_by(type=TransactionType.referral_commission)
             return query.order_by(Transaction.created_at.desc()).all()

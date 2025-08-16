@@ -22,7 +22,7 @@ from bot.handlers.start_handler import (
 )
 from bot.handlers.deposit_handler import handle_deposit
 from bot.handlers.withdrawal_handler import handle_withdraw
-from bot.handlers.referral_handlers import handle_referral, handle_referral_info, handle_referral_callback
+from bot.handlers.referral_handlers import handle_referral, handle_referral_info
 from bot.handlers.message_router import route_text_message, handle_error
 from bot.handlers.settings_handler import handle_settings, back_to_main_menu, handle_help, handle_about, handle_support, handle_qa
 from bot.handlers import game_handlers
@@ -75,6 +75,7 @@ async def setup_bot():
     app.add_handler(CommandHandler("withdraw", handle_withdraw))
     app.add_handler(CommandHandler("referral", handle_referral))
     app.add_handler(CommandHandler("challenges", handle_challenges))
+    app.add_handler(CommandHandler("stats", game_handlers.handle_stats))
     app.add_handler(CommandHandler("leaderboard", handle_leaderboard))
     app.add_handler(CommandHandler("history", handle_history))
     app.add_handler(CommandHandler("help", handle_help))
@@ -95,21 +96,23 @@ async def setup_bot():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, route_text_message))
     
     # Register callback query handlers
-    app.add_handler(CallbackQueryHandler(handle_history_pagination, pattern=r"^history_(?:all|deposits|withdrawals)_page_\d+$"))
-    app.add_handler(CallbackQueryHandler(handle_referral_info, pattern=r"^referral_info$"))
-    app.add_handler(CallbackQueryHandler(handle_referral_callback, pattern=r"^(?:ref_hist_page_|ref_lb_page_)\d+$"))
-    app.add_handler(CallbackQueryHandler(game_handlers.handle_play_callback, pattern=r"^play_"))
+    app.add_handler(CallbackQueryHandler(handle_history_pagination, pattern=r"^history_(?:all|deposits|withdrawals|bets|payouts|bonuses|commissions)_page_\d+$"))
     app.add_handler(CallbackQueryHandler(handle_challenges_callback, pattern=r"^(?:chal_page_\d+|chal_claim_\d+)$"))
     app.add_handler(CallbackQueryHandler(handle_leaderboard_callback, pattern=r"^(?:lb_period_.*|lb_metric_.*|lb_.*_page_\d+)$"))
-    # Admin callbacks
+    # Admin callbacks (inline pagination & toggle)
     app.add_handler(CallbackQueryHandler(handle_admin_stats, pattern=r"^admin_stats_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_stats, pattern=r"^admin_stats_refresh$"))
     app.add_handler(CallbackQueryHandler(handle_admin_users, pattern=r"^admin_users_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_users, pattern=r"^admin_users_refresh$"))
     app.add_handler(CallbackQueryHandler(handle_admin_games, pattern=r"^admin_games_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_games, pattern=r"^admin_games_refresh$"))
     app.add_handler(CallbackQueryHandler(handle_admin_alerts, pattern=r"^admin_alerts_page_\d+$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_alerts, pattern=r"^admin_alerts_refresh$"))
     app.add_handler(CallbackQueryHandler(handle_admin_toggle_callback, pattern=r"^admin_toggle_emergency$"))
+    app.add_handler(CallbackQueryHandler(handle_admin_main, pattern=r"^admin_back_main$"))
     
     # Error handler
-    app.add_error_handler(handle_error)
+    # app.add_error_handler(handle_error)
     
     return app
 
