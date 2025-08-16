@@ -1,60 +1,64 @@
-# Tron Bot Boilerplate
+# TronDiceBot
 
-A production-ready Python boilerplate for building Telegram or service bots that accept TRON (TRX) payments. It provides a clean architecture, TRON wallet management, deposit monitoring, and withdrawal processing so you can focus on your bot logic.
-
-This repository is intentionally generic: no logic or business rules are included.
+A Telegram dice game bot built on the TRON (TRX) blockchain. Users bet on a 1–100 dice roll with a fixed house edge, provably fair randomness, secure TRX payments, and transparent tracking.
 
 ## Version
 
-Current version: 1.0.0
+Current version: 1.0.0 (MVP)
 
 ## Highlights
 
-- __TRON payments__: deposit monitoring and withdrawal processing
-- __Per-user wallets__: secure generation and encrypted private keys
-- __Clean architecture__: clear separation of bot, services, blockchain, database, workers, and utilities
-- __PostgreSQL + SQLAlchemy__: robust persistence layer
-- __Background jobs with APScheduler__: periodic workers for payments and housekeeping
-- __Straightforward setup__: direct Python execution
+- **Provably fair dice game** with server/client seeds and nonces
+- **TRON payments**: deposit monitoring, per-user wallets, withdrawals
+- **Game features**: challenges, leaderboards, referrals, history and stats
+- **Admin & monitoring**: admin dashboards, alerts, scheduled jobs
+- **Clean architecture** with PostgreSQL + SQLAlchemy and APScheduler
+- **Production-ready** logging, configuration via `.env`
 
 ## Project Structure
 
 ```
-tron-bot-boilerplate/
-├── main.py                 # Application entrypoint
-├── config.py               # Centralized configuration
+tron-dice-bot/
+├── main.py                      # App entry point; starts bot + scheduler
+├── config.py                    # Centralized configuration
 ├── blockchain/
-│   └── tron_client.py      # TRON RPC client integration
+│   └── tron_client.py           # TRON RPC client integration
 ├── bot/
-│   ├── handlers/           # Bot command/message handlers
-│   ├── keyboards.py        # Keyboard layouts
-│   ├── messages.py         # Message building & formatting
-│   ├── utils.py            # Bot helpers/utilities
-│   └── ...                 # Other bot modules
+│   ├── handlers/                # Telegram handlers (game, wallet, admin, etc.)
+│   ├── keyboards.py             # Keyboard layouts
+│   ├── messages.py              # Message templates & formatting
+│   └── utils.py                 # Bot helpers
 ├── services/
-│   ├── user_service.py     # User management
-│   ├── wallet_service.py   # Wallet generation & management
-│   ├── deposit_service.py  # Deposit monitoring & processing
-│   ├── withdrawal_service.py # Withdrawals & limits
-│   └── ...                 # Other domain services
+│   ├── game_service.py          # Core game mechanics
+│   ├── fairness_service.py      # Provably fair seeds + verification
+│   ├── deposit_service.py       # Deposits monitoring/crediting
+│   ├── withdrawal_service.py    # Withdrawals & limits
+│   ├── wallet_service.py        # Wallet generation & security
+│   ├── user_service.py          # User management & stats
+│   ├── referral_service.py      # Referral tracking & commissions
+│   ├── challenge_service.py     # Daily challenges
+│   ├── leaderboard_service.py   # Rankings & aggregation
+│   └── admin_service.py         # Admin metrics and controls
 ├── database/
-│   ├── models.py           # SQLAlchemy ORM models
-│   ├── database.py         # DB session/engine
-│   └── migrations/         # Alembic migrations
+│   ├── models.py                # SQLAlchemy ORM models
+│   ├── database.py              # Session/engine init
+│   └── migrations/              # Alembic migrations
 ├── workers/
-│   ├── deposit_monitor.py  # Periodic deposit check
-│   └── withdrawal_processor.py # Periodic withdrawal processing
+│   ├── deposit_monitor.py       # Periodic deposit confirmations
+│   ├── withdrawal_processor.py  # Periodic withdrawal processing
+│   ├── challenge_worker.py      # Challenge updates & resets
+│   ├── leaderboard_worker.py    # Leaderboards aggregation
+│   └── admin_monitor.py         # Admin alerts & monitoring
 ├── utils/
-│   ├── encryption.py       # Symmetric encryption helpers
-│   ├── validators.py       # Input validation
-│   ├── helpers.py          # Misc helpers
-│   └── logger.py           # Logging setup
-├── requirements.txt        # Python dependencies
-├── .env.example            # Environment variables template
-└── generate_key.py         # Helper to generate encryption key
+│   ├── encryption.py            # Symmetric encryption helpers
+│   ├── validators.py            # Input validation
+│   ├── helpers.py               # Misc helpers
+│   └── logger.py                # Logging setup
+├── tests/                       # Unit & integration tests
+├── .env.example                 # Environment variables template
+├── requirements.txt             # Python dependencies
+└── generate_key.py              # Helper to generate encryption key
 ```
-
-Note: File names listed above reflect the typical layout in this repo; keep your own modules as needed.
 
 ## Requirements
 
@@ -65,8 +69,8 @@ Note: File names listed above reflect the typical layout in this repo; keep your
 
 1) Clone the repository
 ```bash
-git clone https://github.com/Ismael237/tron-bot-boilerplate.git
-cd tron-bot-boilerplate
+git clone https://github.com/Ismael237/tron-dice-bot.git
+cd tron-dice-bot
 ```
 
 2) Create and activate a virtual environment
@@ -90,58 +94,103 @@ pip install -r requirements.txt
 
 4) Create your environment file
 ```bash
-copy .env.example .env
+copy .env.example .env   # Windows
+# or
+cp .env.example .env     # Linux/macOS
 ```
-Then edit `.env` and set your values
+Then edit `.env` and set your values.
 
 5) Initialize the database
 ```bash
 alembic upgrade head
 ```
 
+## Key Environment Variables (.env)
+
+- Telegram
+  - `TELEGRAM_BOT_TOKEN` (required)
+  - `TELEGRAM_ADMIN_ID`, `TELEGRAM_ADMIN_USERNAME`, `BOT_USERNAME`
+- Database
+  - `DATABASE_URL` (e.g. postgresql://user:pass@localhost:5432/bot)
+- TRON / Payments
+  - `TRON_PRIVATE_KEY` (master key for funding/ops)
+  - `TRON_API_URL` (e.g. https://api.trongrid.io)
+  - `TRON_EXPLORER_URL`
+  - `DEPOSIT_CONFIRMATIONS_REQUIRED`
+  - `DEPOSIT_TO_MAIN_WALLET_RATE`, `WITHDRAWAL_FEE_RATE`
+- Game & Limits
+  - `HOUSE_EDGE`, `MIN_BET_AMOUNT`, `MAX_BET_AMOUNT`
+  - `DAILY_WITHDRAWAL_LIMIT`, `MIN_WITHDRAWAL_AMOUNT`, `ITEMS_PER_PAGE`
+  - `REFERRAL_RATE`
+- Scheduler & Monitoring
+  - `DEPOSIT_CHECK_INTERVAL`, `WITHDRAWAL_PROCESS_INTERVAL`
+  - `AP_SCHEDULER_THREAD_POOL_SIZE`
+  - `ADMIN_BIG_WIN_TRX`, `ADMIN_HOT_WALLET_MIN_TRX`, `ADMIN_SPIKE_GAMES_PER_MIN`
+  - `EMERGENCY_STOP`
+- Security & Logging
+  - `ENCRYPTION_KEY` (32 bytes), `LOG_LEVEL`, `LOG_FILE`, `ERROR_LOG_FILE`
+
+See `.env.example` for defaults and full list.
+
 ## Run
 
-Start the app directly with Python:
+Start the bot directly with Python:
 ```bash
 python main.py
 ```
+Logs are written as configured in `.env`.
 
-Logs are typically written under `logs/` as configured by your `.env`.
+### Scheduled Jobs
+APScheduler is configured in `main.py` (`start_scheduler()`):
+- Deposits: `workers/deposit_monitor.py`
+- Withdrawals: `workers/withdrawal_processor.py`
+- Challenges: periodic updates + daily reset
+- Leaderboards: aggregation and notifications
+- Admin monitor: alerts and daily/periodic summaries
 
-## TRON Payment Flow (Overview)
+## Telegram Commands (examples)
 
-- __Wallets__: a secure master private key is used to derive or fund per-user wallets. Private keys are encrypted at rest.
-- __Deposits__: workers watch incoming transactions to user wallets and credit balances when confirmed.
-- __Withdrawals__: requests are validated and processed periodically with optional fees and daily limits.
+- `/start`, `/help`, `/settings`, `/about`, `/support`, `/qa`
+- `/play`, `/stats`, `/history`
+- `/deposit`, `/withdraw`, `/balance`
+- `/leaderboard`, `/challenges`, `/referral`
+- Admin: `/admin`, `/admin_stats`, `/admin_users`, `/admin_games`, `/admin_alerts`
 
-You can adapt handlers and services to match your bot UX (Telegram commands, menus, or service endpoints).
+## Provably Fair
+
+Implemented in `services/fairness_service.py` using server/client seeds and nonces.
+- Server seed hash is committed before play; seed is revealed after.
+- Users can verify results using the same HMAC-SHA256 process described in `devbook.md`.
+
+## Testing
+
+```bash
+pytest -q
+```
+See `tests/` for unit and integration tests (fairness, game engine, integration).
 
 ## Security Best Practices
 
-- __Protect secrets__: never commit `.env` or private keys; use a different key per environment.
-- __Encrypt at rest__: ensure `ENCRYPTION_KEY` is 32 bytes and rotate when needed; re-encrypt stored secrets on rotation.
-- __Limit withdrawals__: configure `MIN_WITHDRAWAL_AMOUNT` and daily limits; validate destination addresses.
-- __Validate inputs__: sanitize and validate all user-provided data.
-- __Least privilege__: lock down DB and node/API credentials; prefer read-only keys where possible.
-- __Monitor & alert__: capture errors and anomalies; review logs regularly.
+- **Protect secrets**: never commit `.env` or private keys.
+- **Encrypt at rest**: `ENCRYPTION_KEY` must be 32 bytes; rotate and re-encrypt secrets as needed.
+- **Withdrawal limits**: configure min/daily limits; validate TRON addresses.
+- **Input validation**: sanitize all user inputs.
+- **Least privilege**: restrict DB and API credentials.
+- **Monitor & alert**: review logs and admin alerts regularly.
 
 ## Troubleshooting
 
-- Database errors: verify `DATABASE_URL` and that migrations ran: `alembic upgrade head`.
-- TRON RPC issues: check `TRON_API_URL` reachability and API key requirements (if any).
+- Database errors: verify `DATABASE_URL` and run `alembic upgrade head`.
+- TRON RPC issues: check `TRON_API_URL` reachability and keys/quotas.
 - Missing env vars: ensure `.env` matches `.env.example` and values are set.
-- Permissions: make sure the process can write to `logs/`.
+- Permissions: ensure process can write to the configured log files.
 
 ## License
 
 Apache License 2.0
 
-This project is made available under the Apache License, Version 2.0. You may use it in your own bot, including commercially, provided that you retain attribution. Please keep the following notice in your distributions and documentation:
-
-NOTICE: This product includes software developed by the Tron Bot Boilerplate project and its contributors.
-
-See https://www.apache.org/licenses/LICENSE-2.0 for the full license text.
+This project is made available under the Apache License, Version 2.0. See https://www.apache.org/licenses/LICENSE-2.0 for the full license text.
 
 ## Credits
 
-If you use this boilerplate, please credit “Tron Bot Boilerplate” in your project README, docs, or About page.
+If you use this project, please credit “TronDiceBot” in your README/docs.
