@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import List, Dict
 
 from database.database import get_db_session
-from database.models import Challenge, UserChallenge, User, Transaction, TransactionType
+from database.models import Challenge, TransactionStatus, UserChallenge, User, Transaction, TransactionType
 from utils.logger import get_logger
 
 logger = get_logger("challenge_service")
@@ -99,7 +99,7 @@ class ChallengeService:
                 user_id=user_id,
                 type=TransactionType.bonus,
                 amount_trx=reward,
-                status=None,  # Will default per model; leave None to avoid overriding default
+                status=TransactionStatus.completed,
                 description=f"Challenge reward: {ch.name}",
                 reference_id=str(challenge_id),
             )
